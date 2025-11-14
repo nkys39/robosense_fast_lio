@@ -94,6 +94,7 @@ double filter_size_corner_min = 0, filter_size_surf_min = 0, filter_size_map_min
 double cube_len = 0, HALF_FOV_COS = 0, FOV_DEG = 0, total_distance = 0, lidar_end_time = 0, first_lidar_time = 0.0;
 int    effct_feat_num = 0, time_log_counter = 0, scan_count = 0, publish_count = 0;
 int    iterCount = 0, feats_down_size = 0, NUM_MAX_ITERATIONS = 0, laserCloudValidNum = 0, pcd_save_interval = -1, pcd_index = 0;
+int    num_sub_cloud = 1;
 bool   point_selected_surf[100000] = {0};
 bool   lidar_pushed, flg_first_scan = true, flg_exit = false, flg_EKF_inited;
 bool   scan_pub_en = false, dense_pub_en = false, scan_body_pub_en = false;
@@ -280,7 +281,7 @@ void lasermap_fov_segment()
     kdtree_delete_time = omp_get_wtime() - delete_begin;
 }
 
-void standard_pcl_cbk(const sensor_msgs::msg::PointCloud2::UniquePtr msg) 
+void standard_pcl_cbk(const sensor_msgs::msg::PointCloud2::UniquePtr msg)
 {
     mtx_buffer.lock();
     scan_count ++;
@@ -296,11 +297,26 @@ void standard_pcl_cbk(const sensor_msgs::msg::PointCloud2::UniquePtr msg)
         is_first_lidar = false;
     }
 
-    PointCloudXYZI::Ptr  ptr(new PointCloudXYZI());
-    p_pre->process(msg, ptr);
-    lidar_buffer.push_back(ptr);
-    time_buffer.push_back(cur_time);
-    last_timestamp_lidar = cur_time;
+    if(p_pre->lidar_type == RSM1_BREAK){
+        double start_time, end_time;
+        for(int i_sub_cloud = 0; i_sub_cloud < num_sub_cloud; i_sub_cloud ++){
+            PointCloudXYZI::Ptr  ptr(new PointCloudXYZI());
+            p_pre->process(msg, ptr, i_sub_cloud, num_sub_cloud, start_time, end_time);
+            lidar_buffer.push_back(ptr);
+            time_buffer.push_back(start_time);
+            last_timestamp_lidar = start_time;
+            sig_buffer.notify_all();
+        }
+        lidar_end_time = end_time;
+    }
+    else{
+        PointCloudXYZI::Ptr  ptr(new PointCloudXYZI());
+        double start_time, end_time;
+        p_pre->process(msg, ptr);
+        lidar_buffer.push_back(ptr);
+        time_buffer.push_back(cur_time);
+        last_timestamp_lidar = cur_time;
+    }
     s_plot11[scan_count] = omp_get_wtime() - preprocess_start_time;
     mtx_buffer.unlock();
     sig_buffer.notify_all();
@@ -390,7 +406,11 @@ bool sync_packages(MeasureGroup &meas)
     if(!lidar_pushed)
     {
         meas.lidar = lidar_buffer.front();
-        meas.lidar_beg_time = time_buffer.front();
+        if(p_pre->lidar_type == RSM1){
+            meas.lidar_beg_time = time_buffer.front() - meas.lidar->points.back().curvature / double(1000);
+        }else{
+            meas.lidar_beg_time = time_buffer.front();
+        }
         if (meas.lidar->points.size() <= 1) // time too little
         {
             lidar_end_time = meas.lidar_beg_time + lidar_mean_scantime;
@@ -826,6 +846,7 @@ public:
         this->declare_parameter<int>("preprocess.timestamp_unit", US);
         this->declare_parameter<int>("preprocess.scan_rate", 10);
         this->declare_parameter<int>("point_filter_num", 2);
+        this->declare_parameter<int>("mapping.num_sub_cloud", 1);
         this->declare_parameter<bool>("feature_extract_enable", false);
         this->declare_parameter<bool>("runtime_pos_log_enable", false);
         this->declare_parameter<bool>("mapping.extrinsic_est_en", true);
@@ -862,6 +883,7 @@ public:
         this->get_parameter_or<int>("preprocess.timestamp_unit", p_pre->time_unit, US);
         this->get_parameter_or<int>("preprocess.scan_rate", p_pre->SCAN_RATE, 10);
         this->get_parameter_or<int>("point_filter_num", p_pre->point_filter_num, 2);
+        this->get_parameter_or<int>("mapping.num_sub_cloud", num_sub_cloud, 1);
         this->get_parameter_or<bool>("feature_extract_enable", p_pre->feature_enabled, false);
         this->get_parameter_or<bool>("runtime_pos_log_enable", runtime_pos_log, 0);
         this->get_parameter_or<bool>("mapping.extrinsic_est_en", extrinsic_est_en, true);
