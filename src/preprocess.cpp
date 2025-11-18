@@ -44,11 +44,14 @@ void Preprocess::set(bool feat_en, int lid_type, double bld, int pfilt_num)
   point_filter_num = pfilt_num;
 }
 
+// Livox support disabled for Robosense-only build
+/*
 void Preprocess::process(const livox_ros_driver2::msg::CustomMsg::UniquePtr &msg, PointCloudXYZI::Ptr& pcl_out)
 {
   avia_handler(msg);
   *pcl_out = pl_surf;
 }
+*/
 
 void Preprocess::process(const sensor_msgs::msg::PointCloud2::UniquePtr &msg, PointCloudXYZI::Ptr& pcl_out)
 {
@@ -81,9 +84,9 @@ void Preprocess::process(const sensor_msgs::msg::PointCloud2::UniquePtr &msg, Po
       velodyne_handler(msg);
       break;
 
-    case MID360:
-      mid360_handler(msg);
-      break;
+    // case MID360:  // Disabled for Robosense-only build
+    //   mid360_handler(msg);
+    //   break;
 
     default:
       default_handler(msg);
@@ -139,6 +142,7 @@ void Preprocess::process(const sensor_msgs::msg::PointCloud2::UniquePtr &msg, Po
   *pcl_out = pl_surf;
 }
 
+#if 0  // Livox support disabled for Robosense-only build
 void Preprocess::avia_handler(const livox_ros_driver2::msg::CustomMsg::UniquePtr &msg)
 {
   pl_surf.clear();
@@ -239,6 +243,7 @@ void Preprocess::avia_handler(const livox_ros_driver2::msg::CustomMsg::UniquePtr
     }
   }
 }
+#endif  // End of Livox avia_handler
 
 void Preprocess::oust64_handler(const sensor_msgs::msg::PointCloud2::UniquePtr &msg)
 {
@@ -520,6 +525,7 @@ void Preprocess::velodyne_handler(const sensor_msgs::msg::PointCloud2::UniquePtr
   }
 }
 
+#if 0  // Livox support disabled for Robosense-only build
 void Preprocess::mid360_handler(const sensor_msgs::msg::PointCloud2::UniquePtr &msg)
 {
   pl_surf.clear();
@@ -602,6 +608,7 @@ void Preprocess::mid360_handler(const sensor_msgs::msg::PointCloud2::UniquePtr &
     }
   }
 }
+#endif  // End of Livox mid360_handler
 
 void Preprocess::default_handler(const sensor_msgs::msg::PointCloud2::UniquePtr &msg)
 {
