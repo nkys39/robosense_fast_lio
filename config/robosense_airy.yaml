@@ -18,7 +18,7 @@
 
         preprocess:
             lidar_type: 5                # 1 for Livox serials LiDAR, 2 for Velodyne LiDAR, 3 for ouster LiDAR, 4 for MID360, 5 for RSM1, 6 for RSM1_BREAK
-            scan_line: 32                # 32 for Airy (32-line MEMS LiDAR)
+            scan_line: 96                # 96 for Airy (96-line MEMS LiDAR)
             blind: 0.0
             timestamp_unit: 0            # 0-second, 1-milisecond, 2-microsecond, 3-nanosecond
             scan_rate: 10

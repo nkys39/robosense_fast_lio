@@ -9,7 +9,7 @@
 - **RS-LiDAR-M1** - 5ラインMEMS LiDAR
 - **RS-LiDAR-E1R** - 5ラインMEMS LiDAR（AC1の前モデル）
 - **RS-LiDAR-AC1** - 5ラインMEMS LiDAR（最新モデル）
-- **RS-LiDAR-Airy** - 32ラインMEMS LiDAR
+- **RS-LiDAR-Airy** - 96ラインMEMS LiDAR
 
 これらのLiDARは同一の点群フォーマットを使用しているため、同じ実装でサポートされます。
 
@@ -148,9 +148,9 @@ if (p_pre->lidar_type == RSM1_BREAK) {
 - `scan_line: 5`
 
 #### `config/robosense_airy.yaml`
-- Airy（32ライン）用の設定ファイル
+- Airy（96ライン）用の設定ファイル
 - `lidar_type: 5` (RSM1)
-- `scan_line: 32`
+- `scan_line: 96`
 
 #### `launch/mapping_robosense_ac1.launch.py`
 - AC1/E1R/M1用のlaunchファイル
@@ -179,7 +179,7 @@ source install/setup.bash
 ros2 launch fast_lio mapping_robosense_ac1.launch.py
 ```
 
-#### Airy（32ライン）の場合：
+#### Airy（96ライン）の場合：
 
 ```bash
 ros2 launch fast_lio mapping_robosense_airy.launch.py
@@ -209,7 +209,7 @@ mapping:
 - **lidar_type: 5** - Robosense LiDARを使用する場合は必ず`5`に設定
 - **scan_line** - LiDARモデルに応じて設定
   - AC1/E1R/M1: `5`
-  - Airy: `32`
+  - Airy: `96`
 - **timestamp_unit** - Robosense ROSドライバが出力するタイムスタンプの単位
   - 通常は`0`（秒単位）
 - **num_sub_cloud** - サブクラウド分割数
@@ -254,7 +254,7 @@ git submodule update --init --recursive
   ros2 topic echo /rs_lidar/points --field header
   ```
 - `lidar_type`が`5`に設定されているか確認
-- `scan_line`がLiDARモデルに合っているか確認
+- `scan_line`がLiDARモデルに合っているか確認（AC1/E1R/M1は5、Airyは96）
 
 ### 処理が遅い・メモリ不足
 
