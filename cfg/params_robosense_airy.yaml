@@ -8,56 +8,67 @@
 # Authors: Kenny J. Chen, Ryan Nemiroff, Brett T. Lopez   #
 # Contact: {kennyjchen, ryguyn, btlopez}@ucla.edu         #
 #                                                         #
-# Robosense Airy (96-line MEMS LiDAR) Parameters          #
+# Robosense Airy (96ライン MEMS LiDAR) パラメータ          #
+# - 96ライン構成により十分な点群密度を確保                 #
+# - 標準パラメータで高品質なオドメトリを実現                #
 #                                                         #
 ###########################################################
 
 /**:
   ros__parameters:
-    use_sim_time: false
-    frames/odom: odom
-    frames/baselink: base_link
-    frames/lidar: lidar
-    frames/imu: imu
+    use_sim_time: false      # シミュレーション時刻を使用しない（実機用）
 
-    map/waitUntilMove: true
-    map/dense/filtered: false
-    map/sparse/leafSize: 0.25
+    # 座標フレーム名の定義
+    frames/odom: odom           # オドメトリフレーム
+    frames/baselink: base_link  # ロボットベースリンク
+    frames/lidar: lidar         # LiDARフレーム
+    frames/imu: imu             # IMUフレーム
 
-    odom/gravity: 9.80665
-    odom/computeTimeOffset: true
+    # マップ生成設定
+    map/waitUntilMove: true        # ロボットが動くまで待機
+    map/dense/filtered: false      # 密なマップをフィルタリングしない
+    map/sparse/leafSize: 0.25      # スパースマップのリーフサイズ (m)
 
-    odom/imu/approximateGravity: false
-    odom/imu/calibration/gyro: true
-    odom/imu/calibration/accel: true
-    odom/imu/calibration/time: 3.0
-    odom/imu/bufferSize: 5000
+    # オドメトリ基本設定
+    odom/gravity: 9.80665           # 重力加速度 (m/s^2)
+    odom/computeTimeOffset: true    # LiDARとIMUの時刻オフセットを計算
 
-    # Robosense Airy has more points (96-line), standard parameters
-    odom/preprocessing/cropBoxFilter/size: 1.0
-    odom/preprocessing/voxelFilter/res: 0.25
+    # IMU設定
+    odom/imu/approximateGravity: false  # 重力を近似しない（正確な値を使用）
+    odom/imu/calibration/gyro: true     # ジャイロのキャリブレーションを有効化
+    odom/imu/calibration/accel: true    # 加速度計のキャリブレーションを有効化
+    odom/imu/calibration/time: 3.0      # キャリブレーション時間 (秒)
+    odom/imu/bufferSize: 5000           # IMUバッファサイズ
 
-    # Standard keyframe thresholds
-    odom/keyframe/threshD: 1.0
-    odom/keyframe/threshR: 45.0
+    # 点群前処理パラメータ（96ライン用の標準設定）
+    odom/preprocessing/cropBoxFilter/size: 1.0  # クロップボックスのサイズ (m)
+    # 96ライン構成では十分な点群密度があるため、標準的なボクセルサイズを使用
+    odom/preprocessing/voxelFilter/res: 0.25    # ボクセルフィルタの解像度 (m)
 
-    # Standard submap and GICP parameters
-    odom/submap/keyframe/knn: 10
-    odom/submap/keyframe/kcv: 10
-    odom/submap/keyframe/kcc: 10
-    odom/gicp/minNumPoints: 64
-    odom/gicp/kCorrespondences: 16
-    odom/gicp/maxCorrespondenceDistance: 0.5
-    odom/gicp/maxIterations: 32
-    odom/gicp/transformationEpsilon: 0.01
-    odom/gicp/rotationEpsilon: 0.01
-    odom/gicp/initLambdaFactor: 1e-9
+    # キーフレーム生成の閾値（標準設定）
+    # 96ライン構成では十分な特徴点が得られるため、標準的な閾値を使用
+    odom/keyframe/threshD: 1.0   # キーフレーム生成の距離閾値 (m)
+    odom/keyframe/threshR: 45.0  # キーフレーム生成の回転閾値 (度)
 
-    # Geometric observer parameters
-    odom/geo/Kp: 4.5
-    odom/geo/Kv: 11.25
-    odom/geo/Kq: 4.0
-    odom/geo/Kab: 2.25
-    odom/geo/Kgb: 1.0
-    odom/geo/abias_max: 5.0
-    odom/geo/gbias_max: 0.5
+    # サブマップとGICPパラメータ（標準設定）
+    odom/submap/keyframe/knn: 10  # 最近傍キーフレーム数
+    odom/submap/keyframe/kcv: 10  # 凸包用キーフレーム数
+    odom/submap/keyframe/kcc: 10  # 凹包用キーフレーム数
+
+    # GICP（Generalized Iterative Closest Point）設定
+    odom/gicp/minNumPoints: 64              # GICP実行に必要な最小点数
+    odom/gicp/kCorrespondences: 16          # 対応点の数
+    odom/gicp/maxCorrespondenceDistance: 0.5 # 対応点の最大距離 (m)
+    odom/gicp/maxIterations: 32             # 最大反復回数
+    odom/gicp/transformationEpsilon: 0.01   # 変換行列の収束判定閾値
+    odom/gicp/rotationEpsilon: 0.01         # 回転の収束判定閾値
+    odom/gicp/initLambdaFactor: 1e-9        # 初期λ係数（レーベンバーグ・マルカート法）
+
+    # 幾何オブザーバーのゲイン設定
+    odom/geo/Kp: 4.5          # 位置ゲイン
+    odom/geo/Kv: 11.25        # 速度ゲイン
+    odom/geo/Kq: 4.0          # 姿勢ゲイン
+    odom/geo/Kab: 2.25        # 加速度バイアスゲイン
+    odom/geo/Kgb: 1.0         # ジャイロバイアスゲイン
+    odom/geo/abias_max: 5.0   # 加速度バイアスの最大値 (m/s^2)
+    odom/geo/gbias_max: 0.5   # ジャイロバイアスの最大値 (rad/s)

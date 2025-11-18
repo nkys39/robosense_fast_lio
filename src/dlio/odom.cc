@@ -505,30 +505,40 @@ void dlio::OdomNode::getScanFromROS(const sensor_msgs::msg::PointCloud2::SharedP
   this->crop.setInputCloud(original_scan_);
   this->crop.filter(*original_scan_);
 
-  // automatically detect sensor type
+  // センサータイプの自動検出
+  // 点群のフィールド名からLiDARの種類を判定する
   this->sensor = dlio::SensorType::UNKNOWN;
   bool has_timestamp = false;
   bool has_ring = false;
 
   for (auto &field : pc->fields) {
     if (field.name == "t") {
+      // Ousterは "t" フィールド（uint32_t、ナノ秒単位）を使用
       this->sensor = dlio::SensorType::OUSTER;
       break;
     } else if (field.name == "time") {
+      // Velodyneは "time" フィールド（float、秒単位の相対時刻）を使用
       this->sensor = dlio::SensorType::VELODYNE;
       break;
     } else if (field.name == "timestamp") {
+      // timestamp フィールドの存在を記録（HESAI、LIVOX、Robosenseが使用）
       has_timestamp = true;
     } else if (field.name == "ring") {
+      // ring フィールドの存在を記録（Robosenseが使用）
       has_ring = true;
     }
   }
 
-  // Robosense has both timestamp and ring fields
+  // Robosense判定: timestampとringの両方のフィールドを持つ場合
+  // - timestamp: double型、秒単位の絶対時刻
+  // - ring: uint16_t型、レーザーリング番号（AC1=5ライン、Airy=96ライン）
+  // この組み合わせがRobosense MEMS LiDARの特徴
   if (this->sensor == dlio::SensorType::UNKNOWN && has_timestamp && has_ring) {
     this->sensor = dlio::SensorType::ROBOSENSE;
   } else if (this->sensor == dlio::SensorType::UNKNOWN && has_timestamp) {
-    // Distinguish between HESAI and LIVOX by timestamp magnitude
+    // timestampのみの場合は、値の大きさでHESAIとLIVOXを区別
+    // HESAI: 秒単位の絶対時刻（< 1e14）
+    // LIVOX: ナノ秒単位の絶対時刻（> 1e14）
     if (original_scan_->points[0].timestamp < 1e14) {
       this->sensor = dlio::SensorType::HESAI;
     } else {
@@ -654,12 +664,21 @@ void dlio::OdomNode::deskewPointcloud() {
       { return p1.value().timestamp != p2.value().timestamp; };
     extract_point_time = [&sweep_ref_time](boost::range::index_value<PointType&, long> pt)
       { return pt.value().timestamp * 1e-9f; };
+
+  // Robosense MEMS LiDAR (AC1/E1R/M1/Airy)のデスキューイング処理
+  // - timestampは秒単位の絶対時刻（double型）として保存されている
+  // - HESAIと同様に絶対時刻をそのまま使用（単位変換不要）
+  // - この実装により、スキャン中のロボットの動きを正確に補正できる
   } else if (this->sensor == dlio::SensorType::ROBOSENSE) {
+    // タイムスタンプによる点群のソート比較関数
     point_time_cmp = [](const PointType& p1, const PointType& p2)
       { return p1.timestamp < p2.timestamp; };
+    // 隣接する点のタイムスタンプが異なるかチェックする関数
     point_time_neq = [](boost::range::index_value<PointType&, long> p1,
                         boost::range::index_value<PointType&, long> p2)
       { return p1.value().timestamp != p2.value().timestamp; };
+    // 点からタイムスタンプを抽出する関数
+    // Robosenseのtimestampは既に秒単位の絶対時刻なので、そのまま返す
     extract_point_time = [&sweep_ref_time](boost::range::index_value<PointType&, long> pt)
       { return pt.value().timestamp; };
   }

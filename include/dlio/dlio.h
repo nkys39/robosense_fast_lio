@@ -51,6 +51,9 @@ std::string to_string_with_precision(const T a_value, const int n = 6)
 #include <nano_gicp/nano_gicp.h>
 
 namespace dlio {
+  // LiDARセンサーのタイプ
+  // ROBOSENSE: Robosense MEMS LiDAR (AC1/E1R/M1/Airyなど)
+  //            - timestampフィールド（double型、秒単位の絶対時刻）とringフィールドで識別
   enum class SensorType { OUSTER, VELODYNE, HESAI, LIVOX, ROBOSENSE, UNKNOWN };
 
   class OdomNode;
@@ -66,6 +69,7 @@ namespace dlio {
     float time;        // (Velodyne) time since beginning of scan in seconds
     double timestamp;  // (Hesai) absolute timestamp in seconds
                        // (Livox) absolute timestamp in (seconds * 10e9)
+                       // (Robosense) absolute timestamp in seconds - 秒単位の絶対時刻
     };
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   } EIGEN_ALIGN16;

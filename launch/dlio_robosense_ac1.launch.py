@@ -7,7 +7,9 @@
 #   Authors: Kenny J. Chen, Ryan Nemiroff, Brett T. Lopez
 #   Contact: {kennyjchen, ryguyn, btlopez}@ucla.edu
 #
-#   Robosense AC1/E1R/M1 (5-line MEMS LiDAR) Launch File
+#   Robosense AC1/E1R/M1 (5ライン MEMS LiDAR) ローンチファイル
+#   - AC1、E1R、M1用の最適化された設定でDLIOを起動
+#   - デフォルトトピック: /rs_lidar/points, /rs_imu
 #
 
 from launch import LaunchDescription
@@ -20,7 +22,7 @@ from launch_ros.substitutions import FindPackageShare
 def generate_launch_description():
     current_pkg = FindPackageShare('direct_lidar_inertial_odometry')
 
-    # Set default arguments for Robosense AC1
+    # Robosense AC1用のデフォルト引数を設定
     rviz = LaunchConfiguration('rviz', default='false')
     pointcloud_topic = LaunchConfiguration('pointcloud_topic', default='/rs_lidar/points')
     imu_topic = LaunchConfiguration('imu_topic', default='/rs_imu')
@@ -42,11 +44,13 @@ def generate_launch_description():
         description='IMU topic name'
     )
 
-    # Load parameters for Robosense AC1
+    # Robosense AC1用のパラメータファイルを読み込む
+    # - dlio_robosense_ac1.yaml: センサーキャリブレーションと外部パラメータ
+    # - params_robosense_ac1.yaml: 5ライン用に最適化されたアルゴリズムパラメータ
     dlio_yaml_path = PathJoinSubstitution([current_pkg, 'cfg', 'dlio_robosense_ac1.yaml'])
     dlio_params_yaml_path = PathJoinSubstitution([current_pkg, 'cfg', 'params_robosense_ac1.yaml'])
 
-    # DLIO Odometry Node
+    # DLIOオドメトリノード（LiDAR-IMUベースの自己位置推定）
     dlio_odom_node = Node(
         package='direct_lidar_inertial_odometry',
         executable='dlio_odom_node',

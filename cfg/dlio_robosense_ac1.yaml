@@ -8,7 +8,9 @@
 # Authors: Kenny J. Chen, Ryan Nemiroff, Brett T. Lopez   #
 # Contact: {kennyjchen, ryguyn, btlopez}@ucla.edu         #
 #                                                         #
-# Robosense AC1/E1R/M1 (5-line MEMS LiDAR) Configuration  #
+# Robosense AC1/E1R/M1 (5ライン MEMS LiDAR) 設定ファイル    #
+# - AC1、E1R、M1は同じ点群フォーマットを使用します           #
+# - 5ライン構成のため、環境の特徴点が少なくなります          #
 #                                                         #
 ###########################################################
 
@@ -17,24 +19,35 @@
 
     version: 1.1.1
 
+    # 適応型パラメータ: 環境に応じて自動調整
     adaptive: true
 
-    pointcloud/deskew: true
-    pointcloud/voxelize: true
+    # 点群の前処理設定
+    pointcloud/deskew: true      # デスキューイング（モーション補正）を有効化
+    pointcloud/voxelize: true    # ボクセルフィルタを有効化
 
+    # IMUキャリブレーション設定
     imu/calibration: true
+    # 加速度計のバイアス（x, y, z）
     imu/intrinsics/accel/bias: [ 0.0, 0.0, 0.0 ]
+    # 加速度計のスケールマトリックス（3x3）
     imu/intrinsics/accel/sm:   [ 1.,  0.,  0.,
                                  0.,  1.,  0.,
                                  0.,  0.,  1. ]
+    # ジャイロのバイアス（x, y, z）
     imu/intrinsics/gyro/bias: [ 0.0, 0.0, 0.0 ]
 
-    # Extrinsics: adjust these for your sensor setup
-    extrinsics/baselink2imu/t: [ 0.0, 0.0, 0.0 ]
-    extrinsics/baselink2imu/R: [ 1.,  0.,  0.,
+    # 外部パラメータ（センサー間の位置・姿勢関係）
+    # 注意: 実際のセンサー配置に合わせて調整してください
+
+    # ベースリンク→IMU の変換
+    extrinsics/baselink2imu/t: [ 0.0, 0.0, 0.0 ]  # 並進ベクトル [x, y, z] (m)
+    extrinsics/baselink2imu/R: [ 1.,  0.,  0.,    # 回転行列（3x3）
                                  0.,  1.,  0.,
                                  0.,  0.,  1. ]
-    extrinsics/baselink2lidar/t: [ 0.,  0.,  0. ]
-    extrinsics/baselink2lidar/R: [ 1.,  0.,  0.,
+
+    # ベースリンク→LiDAR の変換
+    extrinsics/baselink2lidar/t: [ 0.,  0.,  0. ]  # 並進ベクトル [x, y, z] (m)
+    extrinsics/baselink2lidar/R: [ 1.,  0.,  0.,   # 回転行列（3x3）
                                    0.,  1.,  0.,
                                    0.,  0.,  1. ]
