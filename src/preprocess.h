@@ -2,7 +2,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <pcl_conversions/pcl_conversions.h>
 #include <sensor_msgs/msg/point_cloud2.hpp>
-// #include <livox_ros_driver2/msg/custom_msg.hpp>  // Disabled for Robosense-only build
+#include <livox_ros_driver2/msg/custom_msg.hpp>
 
 using namespace std;
 
@@ -134,26 +134,24 @@ POINT_CLOUD_REGISTER_POINT_STRUCT(
         (double, timestamp, timestamp)
 )
 
-// Livox support disabled for Robosense-only build
-/*
 namespace livox_ros
 {
 typedef struct {
-  float x;
-  float y;
-  float z;
-  float reflectivity;
-  uint8_t tag;
-  uint8_t line;
+  float x;            /**< X axis, Unit:m */
+  float y;            /**< Y axis, Unit:m */
+  float z;            /**< Z axis, Unit:m */
+  float reflectivity; /**< Reflectivity   */
+  uint8_t tag;        /**< Livox point tag   */
+  uint8_t line;       /**< Laser line id     */
 } LivoxPointXyzrtl;
 
 typedef struct {
-  float x;
-  float y;
-  float z;
-  float intensity;
-  uint8_t tag;
-  uint8_t line;
+  float x;            /**< X axis, Unit:m */
+  float y;            /**< Y axis, Unit:m */
+  float z;            /**< Z axis, Unit:m */
+  float intensity;    /**< Intensity   */
+  uint8_t tag;        /**< Livox point tag   */
+  uint8_t line;       /**< Laser line id     */
 } LivoxPointXyzitl;
 }
 POINT_CLOUD_REGISTER_POINT_STRUCT(livox_ros::LivoxPointXyzrtl,
@@ -173,7 +171,6 @@ POINT_CLOUD_REGISTER_POINT_STRUCT(livox_ros::LivoxPointXyzitl,
     (uint8_t, tag, tag)
     (uint8_t, line, line)
 )
-*/
 
 class Preprocess
 {
@@ -182,8 +179,8 @@ class Preprocess
 
   Preprocess();
   ~Preprocess();
-
-  // void process(const livox_ros_driver2::msg::CustomMsg::UniquePtr &msg, PointCloudXYZI::Ptr &pcl_out);  // Disabled for Robosense-only build
+  
+  void process(const livox_ros_driver2::msg::CustomMsg::UniquePtr &msg, PointCloudXYZI::Ptr &pcl_out);
   void process(const sensor_msgs::msg::PointCloud2::UniquePtr &msg, PointCloudXYZI::Ptr &pcl_out);
   void process(const sensor_msgs::msg::PointCloud2::UniquePtr &msg, PointCloudXYZI::Ptr &pcl_out,
                int i_sub_cloud, int num_sub_cloud, double & start_time, double & end_time);
@@ -200,10 +197,10 @@ class Preprocess
   // ros::Publisher pub_full, pub_surf, pub_corn;
 
 private:
-  // void avia_handler(const livox_ros_driver2::msg::CustomMsg::UniquePtr &msg);  // Disabled for Robosense-only build
+  void avia_handler(const livox_ros_driver2::msg::CustomMsg::UniquePtr &msg);
   void oust64_handler(const sensor_msgs::msg::PointCloud2::UniquePtr &msg);
   void velodyne_handler(const sensor_msgs::msg::PointCloud2::UniquePtr &msg);
-  // void mid360_handler(const sensor_msgs::msg::PointCloud2::UniquePtr &msg);  // Disabled for Robosense-only build
+  void mid360_handler(const sensor_msgs::msg::PointCloud2::UniquePtr &msg);
   void robosenseM1_handler(const sensor_msgs::msg::PointCloud2::UniquePtr &msg,
                            int i_sub_cloud, int num_sub_cloud, double & start_time, double & end_time);
   void default_handler(const sensor_msgs::msg::PointCloud2::UniquePtr &msg);
