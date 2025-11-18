@@ -507,6 +507,9 @@ void dlio::OdomNode::getScanFromROS(const sensor_msgs::msg::PointCloud2::SharedP
 
   // automatically detect sensor type
   this->sensor = dlio::SensorType::UNKNOWN;
+  bool has_timestamp = false;
+  bool has_ring = false;
+
   for (auto &field : pc->fields) {
     if (field.name == "t") {
       this->sensor = dlio::SensorType::OUSTER;
@@ -514,12 +517,22 @@ void dlio::OdomNode::getScanFromROS(const sensor_msgs::msg::PointCloud2::SharedP
     } else if (field.name == "time") {
       this->sensor = dlio::SensorType::VELODYNE;
       break;
-    } else if (field.name == "timestamp" && original_scan_->points[0].timestamp < 1e14) {
+    } else if (field.name == "timestamp") {
+      has_timestamp = true;
+    } else if (field.name == "ring") {
+      has_ring = true;
+    }
+  }
+
+  // Robosense has both timestamp and ring fields
+  if (this->sensor == dlio::SensorType::UNKNOWN && has_timestamp && has_ring) {
+    this->sensor = dlio::SensorType::ROBOSENSE;
+  } else if (this->sensor == dlio::SensorType::UNKNOWN && has_timestamp) {
+    // Distinguish between HESAI and LIVOX by timestamp magnitude
+    if (original_scan_->points[0].timestamp < 1e14) {
       this->sensor = dlio::SensorType::HESAI;
-      break;
-    } else if (field.name == "timestamp" && original_scan_->points[0].timestamp > 1e14) {
+    } else {
       this->sensor = dlio::SensorType::LIVOX;
-      break;
     }
   }
 
@@ -641,6 +654,14 @@ void dlio::OdomNode::deskewPointcloud() {
       { return p1.value().timestamp != p2.value().timestamp; };
     extract_point_time = [&sweep_ref_time](boost::range::index_value<PointType&, long> pt)
       { return pt.value().timestamp * 1e-9f; };
+  } else if (this->sensor == dlio::SensorType::ROBOSENSE) {
+    point_time_cmp = [](const PointType& p1, const PointType& p2)
+      { return p1.timestamp < p2.timestamp; };
+    point_time_neq = [](boost::range::index_value<PointType&, long> p1,
+                        boost::range::index_value<PointType&, long> p2)
+      { return p1.value().timestamp != p2.value().timestamp; };
+    extract_point_time = [&sweep_ref_time](boost::range::index_value<PointType&, long> pt)
+      { return pt.value().timestamp; };
   }
 
   // copy points into deskewed_scan_ in order of timestamp
